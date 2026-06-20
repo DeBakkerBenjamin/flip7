@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flip 7 — Compteur de points
 
-## Getting Started
+Application web responsive (mobile-first) pour compter les points au jeu **Flip 7**.
+Next.js + TypeScript + Tailwind CSS, 100 % côté client (sauvegarde dans le `localStorage`).
 
-First, run the development server:
+## Lancer en dev
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build de production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build && npm start
+```
 
-## Learn More
+## Fonctionnalités
 
-To learn more about Next.js, take a look at the following resources:
+- Ajout / suppression de joueurs (2 à 8), couleurs automatiques.
+- Score cible configurable (100 / 150 / 200 ou personnalisé).
+- **Pavé de cartes** par joueur pour chaque manche :
+  - chiffres 0–12, modificateurs `+2 … +10` et `×2`, bouton **Bust** et **Second Chance** ;
+  - bonus **Flip 7** (+15) détecté automatiquement à 7 chiffres uniques ;
+  - score de la manche calculé en direct.
+- Tableau de scores classé avec barres de progression, écran de victoire et revanche.
+- La partie en cours est sauvegardée et survit à un rafraîchissement.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Règle de calcul d'une manche
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+score = (somme des chiffres uniques × 2 si ×2) + somme des modificateurs + 15 si Flip 7
+score = 0 si Bust
+```
 
-## Deploy on Vercel
+## Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Fichier | Rôle |
+| --- | --- |
+| `src/lib/scoring.ts` | Logique de score pure (testable indépendamment) |
+| `src/lib/types.ts` | Types du domaine |
+| `src/lib/useGame.ts` | État de la partie + persistance `localStorage` |
+| `src/components/Setup.tsx` | Écran de configuration |
+| `src/components/Scoreboard.tsx` | Tableau de scores |
+| `src/components/PlayerCardPad.tsx` | Pavé de cartes d'un joueur |
+| `src/components/RoundView.tsx` | Déroulé d'une manche (wizard + récap) |
+| `src/components/VictoryView.tsx` | Écran de victoire |
+| `src/app/page.tsx` | Orchestration des écrans |
