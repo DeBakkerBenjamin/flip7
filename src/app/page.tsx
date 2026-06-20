@@ -5,6 +5,7 @@ import { useGame } from "@/lib/useGame";
 import Setup from "@/components/Setup";
 import Scoreboard from "@/components/Scoreboard";
 import RoundView from "@/components/RoundView";
+import RoundLive from "@/components/RoundLive";
 import VictoryView from "@/components/VictoryView";
 
 export default function Home() {
@@ -45,15 +46,18 @@ export default function Home() {
 
   // status === "playing"
   if (inRound) {
-    return (
-      <RoundView
-        state={state}
-        onCommit={(scores) => {
-          game.commitRound(scores);
-          setInRound(false);
-        }}
-        onCancel={() => setInRound(false)}
-      />
+    const commitProps = {
+      state,
+      onCommit: (scores: Record<string, number>) => {
+        game.commitRound(scores);
+        setInRound(false);
+      },
+      onCancel: () => setInRound(false),
+    };
+    return state.mode === "live" ? (
+      <RoundLive {...commitProps} />
+    ) : (
+      <RoundView {...commitProps} />
     );
   }
 
