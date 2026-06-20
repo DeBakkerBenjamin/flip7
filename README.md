@@ -6,7 +6,8 @@ Next.js + TypeScript + Tailwind CSS, 100 % côté client (sauvegarde dans le `lo
 ## Lancer en dev
 
 ```bash
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Ouvre [http://localhost:3000](http://localhost:3000).
@@ -14,8 +15,36 @@ Ouvre [http://localhost:3000](http://localhost:3000).
 ## Build de production
 
 ```bash
-npm run build && npm start
+pnpm build && pnpm start
 ```
+
+## Scripts
+
+| Script | Rôle |
+| --- | --- |
+| `pnpm dev` | Serveur de dev |
+| `pnpm build` | Build de production |
+| `pnpm typecheck` | Vérification TypeScript (`tsc --noEmit`) |
+| `pnpm lint` | ESLint |
+
+## CI & Déploiement
+
+**CI** — le workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) lance
+**typecheck · lint · build** sur chaque push et pull request. C'est la barrière qualité ;
+il ne déploie pas.
+
+**Déploiement** — géré nativement par **Vercel** (intégration Git), sans GitHub Actions :
+
+- **Preview** automatique sur chaque branche / pull request ;
+- **Production** automatique au merge sur `main`.
+
+### Configuration (une fois)
+
+1. Importer le repo GitHub dans Vercel (*Add New… → Project*).
+2. Vercel détecte Next.js et configure tout seul ; chaque PR génère sa preview, chaque
+   merge sur `main` déploie en production.
+
+Aucun secret n'est nécessaire côté GitHub : la CI ne fait que vérifier le code.
 
 ## Fonctionnalités
 
