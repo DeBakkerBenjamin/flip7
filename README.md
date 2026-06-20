@@ -17,6 +17,25 @@ Ouvre [http://localhost:3000](http://localhost:3000).
 npm run build && npm start
 ```
 
+## Déploiement (GitHub Actions → Vercel)
+
+Le workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) fait :
+
+- **CI** (lint + type-check) sur chaque push et PR ;
+- **Preview** Vercel sur chaque pull request (l'URL est postée en commentaire) ;
+- **Production** Vercel sur push vers `main`.
+
+### Configuration (une fois)
+
+1. Pousser le repo sur GitHub.
+2. Lier le projet à Vercel en local : `npx vercel link` → crée `.vercel/project.json` contenant `orgId` et `projectId`.
+3. Créer un token Vercel : dashboard Vercel → *Account Settings → Tokens*.
+4. Ajouter 3 secrets dans GitHub (*Settings → Secrets and variables → Actions*) :
+   - `VERCEL_TOKEN`
+   - `VERCEL_ORG_ID` (= `orgId`)
+   - `VERCEL_PROJECT_ID` (= `projectId`)
+5. Pour éviter un double déploiement, désactiver l'auto-deploy Git côté Vercel (*Project Settings → Git*) — c'est ce workflow qui déploie.
+
 ## Fonctionnalités
 
 - Ajout / suppression de joueurs (2 à 8), couleurs automatiques.
