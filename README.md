@@ -6,7 +6,8 @@ Next.js + TypeScript + Tailwind CSS, 100 % côté client (sauvegarde dans le `lo
 ## Lancer en dev
 
 ```bash
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Ouvre [http://localhost:3000](http://localhost:3000).
@@ -14,8 +15,17 @@ Ouvre [http://localhost:3000](http://localhost:3000).
 ## Build de production
 
 ```bash
-npm run build && npm start
+pnpm build && pnpm start
 ```
+
+## Scripts
+
+| Script | Rôle |
+| --- | --- |
+| `pnpm dev` | Serveur de dev |
+| `pnpm build` | Build de production |
+| `pnpm typecheck` | Vérification TypeScript (`tsc --noEmit`) |
+| `pnpm lint` | ESLint |
 
 ## Déploiement (GitHub Actions → Vercel)
 
