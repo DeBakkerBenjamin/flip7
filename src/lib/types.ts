@@ -31,6 +31,8 @@ export interface RoundHand {
   bustOn?: number;
   /** Player holds a Second Chance card (cancels one bust). */
   secondChance: boolean;
+  /** Player has stopped (stayed voluntarily or was frozen) → banks points. */
+  stayed?: boolean;
 }
 
 export type GameStatus = "setup" | "playing" | "finished";
@@ -54,5 +56,11 @@ export interface GameState {
 }
 
 export function emptyHand(): RoundHand {
-  return { numbers: [], modifiers: [], busted: false, secondChance: false };
+  return {
+    numbers: [],
+    modifiers: [],
+    busted: false,
+    secondChance: false,
+    stayed: false,
+  };
 }
