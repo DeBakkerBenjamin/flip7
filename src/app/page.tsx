@@ -19,8 +19,8 @@ export default function Home() {
   if (state.status === "setup") {
     return (
       <Setup
-        onStart={(names, target) => {
-          game.startGame(names, target);
+        onStart={(names, target, mode) => {
+          game.startGame(names, target, mode);
           setInRound(false);
         }}
       />

@@ -27,15 +27,27 @@ export interface RoundHand {
   modifiers: Modifier[];
   /** Player flipped a duplicate and busted → scores 0 this round. */
   busted: boolean;
+  /** The duplicate number that caused the bust (for display). */
+  bustOn?: number;
   /** Player holds a Second Chance card (cancels one bust). */
   secondChance: boolean;
 }
 
 export type GameStatus = "setup" | "playing" | "finished";
 
+/**
+ * How a round is entered:
+ * - "live": cards are tapped as they're flipped — a duplicate busts on the
+ *   spot and Second Chance is meaningful.
+ * - "tally": only the final result of each player is entered at the end of the
+ *   round — no live bust, no Second Chance.
+ */
+export type GameMode = "live" | "tally";
+
 export interface GameState {
   players: Player[];
   targetScore: number;
+  mode: GameMode;
   status: GameStatus;
   roundNumber: number;
   winnerId: string | null;

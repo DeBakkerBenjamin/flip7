@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Section {
   title: string;
@@ -18,7 +19,11 @@ const SECTIONS: Section[] = [
   },
   {
     title: "🔢 Cartes chiffres (0–12)",
-    body: "On additionne les chiffres uniques. Retourner un chiffre déjà obtenu = Bust → 0 point pour la manche.",
+    body: "On additionne les chiffres uniques. Retourner un chiffre qu'on a déjà = Bust → 0 point pour toute la manche. (Dans l'app : tape deux fois la même carte pour déclencher le bust.)",
+  },
+  {
+    title: "✋ S'arrêter ≠ Bust",
+    body: "S'arrêter (ou être Freezé) est volontaire : on garde tous ses points. Le Bust, lui, est subi (un doublon) et fait tomber le score à 0. Ce sont deux choses différentes.",
   },
   {
     title: "✨ Flip 7",
@@ -30,7 +35,7 @@ const SECTIONS: Section[] = [
   },
   {
     title: "🃏 Cartes action",
-    body: "Second Chance annule un bust (on défausse le doublon). Freeze force un joueur à s'arrêter. Flip Three force à retourner 3 cartes.",
+    body: "Seconde Chance annule un bust (on défausse le doublon). Freeze force un joueur à s'arrêter — il garde ses points. Flip Three force à retourner 3 cartes.",
   },
   {
     title: "🧮 Calcul d'une manche",
@@ -40,6 +45,13 @@ const SECTIONS: Section[] = [
 
 export default function RulesButton() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Portals need the DOM — only enable after the component has mounted.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   // Lock body scroll while the sheet is open.
   useEffect(() => {
@@ -51,6 +63,62 @@ export default function RulesButton() {
     };
   }, [open]);
 
+  // The overlay is portalled to <body> so ancestor transforms (e.g. the
+  // animated header) can't break its fixed positioning.
+  const overlay = (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Règles du jeu"
+    >
+      <div
+        className="animate-fade absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={() => setOpen(false)}
+      />
+      <div className="animate-sheet relative flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-3xl border border-border bg-surface shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <h2 className="text-xl font-black">
+            Règles · Flip <span className="text-accent">7</span>
+          </h2>
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Fermer"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="overflow-y-auto px-5 py-4">
+          <ul className="flex flex-col gap-4">
+            {SECTIONS.map((s, i) => (
+              <li
+                key={s.title}
+                className="animate-rise"
+                style={{ animationDelay: `${i * 45}ms` }}
+              >
+                <h3 className="font-semibold">{s.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  {s.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="border-t border-border p-4">
+          <button
+            onClick={() => setOpen(false)}
+            className="w-full rounded-2xl bg-accent py-3.5 text-base font-bold text-on-accent transition-transform active:scale-[0.98]"
+          >
+            Compris !
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <button
@@ -61,59 +129,7 @@ export default function RulesButton() {
         ?
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Règles du jeu"
-        >
-          <div
-            className="animate-fade absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          />
-          <div className="animate-sheet relative flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-3xl border border-border bg-surface shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <h2 className="text-xl font-black">
-                Règles · Flip <span className="text-accent">7</span>
-              </h2>
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Fermer"
-                className="grid h-9 w-9 place-items-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="overflow-y-auto px-5 py-4">
-              <ul className="flex flex-col gap-4">
-                {SECTIONS.map((s, i) => (
-                  <li
-                    key={s.title}
-                    className="animate-rise"
-                    style={{ animationDelay: `${i * 45}ms` }}
-                  >
-                    <h3 className="font-semibold">{s.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted">
-                      {s.body}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="border-t border-border p-4">
-              <button
-                onClick={() => setOpen(false)}
-                className="w-full rounded-2xl bg-accent py-3.5 text-base font-bold text-on-accent transition-transform active:scale-[0.98]"
-              >
-                Compris !
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {open && mounted && createPortal(overlay, document.body)}
     </>
   );
 }
