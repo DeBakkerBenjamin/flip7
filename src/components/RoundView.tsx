@@ -132,6 +132,7 @@ export default function RoundView({
           key={players[index].id}
           player={players[index]}
           hand={hands[index]}
+          mode={state.mode}
           onChange={setHand}
         />
       </div>

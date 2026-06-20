@@ -4,6 +4,7 @@ import {
   ADD_MODIFIERS,
   NUMBER_CARDS,
   type AddModifier,
+  type GameMode,
   type Player,
   type RoundHand,
 } from "@/lib/types";
@@ -12,26 +13,57 @@ import { isFlip7, scoreHand } from "@/lib/scoring";
 interface PlayerCardPadProps {
   player: Player;
   hand: RoundHand;
+  mode: GameMode;
   onChange: (hand: RoundHand) => void;
 }
 
 export default function PlayerCardPad({
   player,
   hand,
+  mode,
   onChange,
 }: PlayerCardPadProps) {
+  const live = mode === "live";
   const flip7 = isFlip7(hand);
   const score = scoreHand(hand);
 
-  function toggleNumber(n: number) {
+  // Live mode: a tap on an existing number is a duplicate flip → bust.
+  function tapNumberLive(n: number) {
+    if (hand.busted) return;
+    if (hand.numbers.includes(n)) {
+      if (hand.secondChance) {
+        onChange({ ...hand, secondChance: false }); // discard duplicate + card
+      } else {
+        onChange({ ...hand, busted: true, bustOn: n });
+      }
+      return;
+    }
+    if (hand.numbers.length >= 7) return; // Flip 7 caps the hand
+    onChange({ ...hand, numbers: [...hand.numbers, n] });
+  }
+
+  // Tally mode: a number simply toggles on/off (free correction).
+  function toggleNumberTally(n: number) {
     if (hand.busted) return;
     const has = hand.numbers.includes(n);
-    // Block adding an 8th number unless removing — Flip 7 caps the hand.
     if (!has && hand.numbers.length >= 7) return;
     const numbers = has
       ? hand.numbers.filter((x) => x !== n)
       : [...hand.numbers, n];
     onChange({ ...hand, numbers });
+  }
+
+  function undoLast() {
+    if (hand.numbers.length === 0) return;
+    onChange({ ...hand, numbers: hand.numbers.slice(0, -1) });
+  }
+
+  function recoverFromBust() {
+    onChange({ ...hand, busted: false, bustOn: undefined });
+  }
+
+  function toggleBust() {
+    onChange({ ...hand, busted: !hand.busted, bustOn: undefined });
   }
 
   function toggleAddModifier(m: AddModifier) {
@@ -52,11 +84,8 @@ export default function PlayerCardPad({
     onChange({ ...hand, modifiers });
   }
 
-  function toggleBust() {
-    onChange({ ...hand, busted: !hand.busted });
-  }
-
   function toggleSecondChance() {
+    if (hand.busted) return;
     onChange({ ...hand, secondChance: !hand.secondChance });
   }
 
@@ -90,17 +119,20 @@ export default function PlayerCardPad({
       </div>
 
       {/* Number grid 0..12 */}
-      <div className={`grid grid-cols-5 gap-2 ${dimmed}`}>
+      <div className="grid grid-cols-5 gap-2">
         {NUMBER_CARDS.map((n) => {
           const active = hand.numbers.includes(n);
+          const isBustCard = hand.busted && hand.bustOn === n;
           return (
             <button
               key={n}
-              onClick={() => toggleNumber(n)}
+              onClick={() => (live ? tapNumberLive(n) : toggleNumberTally(n))}
               className={`aspect-square rounded-xl border text-lg font-bold tabular-nums transition-transform active:scale-90 ${
-                active
-                  ? "animate-pop border-transparent bg-accent text-on-accent shadow-md shadow-accent/30"
-                  : "border-border bg-surface-2 text-foreground"
+                isBustCard
+                  ? "animate-pop border-transparent bg-red-500 text-white shadow-md shadow-red-500/30"
+                  : active
+                    ? "animate-pop border-transparent bg-accent text-on-accent shadow-md shadow-accent/30"
+                    : `border-border bg-surface-2 text-foreground ${dimmed}`
               }`}
             >
               {n}
@@ -139,29 +171,62 @@ export default function PlayerCardPad({
         </button>
       </div>
 
-      {/* Bust + Second Chance */}
-      <div className="mt-3 flex gap-2">
+      {/* Bottom controls */}
+      {live ? (
+        hand.busted ? (
+          <div className="animate-rise mt-3 flex items-center gap-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3">
+            <span className="text-2xl">💥</span>
+            <span className="flex-1 text-sm font-bold text-red-600">
+              Busté ! Doublon du {hand.bustOn} → 0 point
+            </span>
+            <button
+              onClick={recoverFromBust}
+              className="rounded-lg bg-red-500 px-3 py-2 text-sm font-bold text-white transition-transform active:scale-95"
+            >
+              ↩︎ Annuler
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={undoLast}
+                disabled={hand.numbers.length === 0}
+                className="flex-1 rounded-xl border border-border bg-surface-2 py-3 text-sm font-bold text-foreground transition-transform active:scale-95 disabled:opacity-40"
+              >
+                ↩︎ Annuler la carte
+              </button>
+              <button
+                onClick={toggleSecondChance}
+                className={`flex-1 rounded-xl border py-3 text-sm font-bold transition-transform active:scale-95 ${
+                  hand.secondChance
+                    ? "border-transparent bg-sky-500 text-white shadow-md shadow-sky-500/30"
+                    : "border-border bg-surface-2 text-sky-700"
+                }`}
+              >
+                🛡 Seconde chance
+              </button>
+            </div>
+            {hand.secondChance && (
+              <p className="mt-2 text-center text-xs text-sky-700">
+                Le prochain doublon sera annulé au lieu de buster.
+              </p>
+            )}
+          </>
+        )
+      ) : (
+        // Tally mode: a single explicit Bust toggle.
         <button
           onClick={toggleBust}
-          className={`flex-1 rounded-xl border py-3 text-sm font-bold transition-transform active:scale-95 ${
+          className={`mt-3 w-full rounded-xl border py-3 text-sm font-bold transition-transform active:scale-95 ${
             hand.busted
               ? "border-transparent bg-red-500 text-white shadow-md shadow-red-500/30"
               : "border-border bg-surface-2 text-red-600"
           }`}
         >
-          💥 Bust
+          💥 {hand.busted ? "Busté — 0 point (annuler)" : "Marquer comme busté"}
         </button>
-        <button
-          onClick={toggleSecondChance}
-          className={`flex-1 rounded-xl border py-3 text-sm font-bold transition-transform active:scale-95 ${
-            hand.secondChance
-              ? "border-transparent bg-sky-500 text-white shadow-md shadow-sky-500/30"
-              : "border-border bg-surface-2 text-sky-700"
-          }`}
-        >
-          🛡 2nd Chance
-        </button>
-      </div>
+      )}
     </div>
   );
 }

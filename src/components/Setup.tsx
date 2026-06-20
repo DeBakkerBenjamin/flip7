@@ -3,17 +3,33 @@
 import { useState } from "react";
 import { colorForIndex } from "@/lib/colors";
 import { DEFAULT_TARGET } from "@/lib/useGame";
+import type { GameMode } from "@/lib/types";
 import RulesButton from "./Rules";
 
 interface SetupProps {
-  onStart: (names: string[], target: number) => void;
+  onStart: (names: string[], target: number, mode: GameMode) => void;
 }
 
+const MODES: { id: GameMode; label: string; desc: string }[] = [
+  {
+    id: "live",
+    label: "🎴 Tour par tour",
+    desc: "On tape les cartes en direct. Doublon = bust immédiat, Seconde Chance active.",
+  },
+  {
+    id: "tally",
+    label: "✍️ Fin de manche",
+    desc: "On entre le résultat de chaque joueur à la fin de la manche. Plus rapide.",
+  },
+];
+
 const MAX_PLAYERS = 8;
+const PRESETS = [100, 150, 200];
 
 export default function Setup({ onStart }: SetupProps) {
   const [names, setNames] = useState<string[]>(["", ""]);
   const [target, setTarget] = useState<number>(DEFAULT_TARGET);
+  const [mode, setMode] = useState<GameMode>("live");
 
   const filled = names.map((n) => n.trim()).filter(Boolean);
   const canStart = filled.length >= 2;
@@ -103,11 +119,11 @@ export default function Setup({ onStart }: SetupProps) {
             Score cible
           </h2>
           <div className="flex items-center gap-2">
-            {[100, 150, 200].map((preset) => (
+            {PRESETS.map((preset) => (
               <button
                 key={preset}
                 onClick={() => setTarget(preset)}
-                className={`flex-1 rounded-2xl border py-3 text-base font-semibold transition-colors ${
+                className={`flex-1 rounded-2xl border py-3 text-base font-semibold transition-colors active:scale-95 ${
                   target === preset
                     ? "border-accent bg-accent/10 text-accent"
                     : "border-border bg-surface text-foreground hover:border-accent/50"
@@ -118,19 +134,69 @@ export default function Setup({ onStart }: SetupProps) {
             ))}
             <input
               type="number"
+              inputMode="numeric"
               min={1}
-              value={target}
+              value={PRESETS.includes(target) ? "" : target}
               onChange={(e) => setTarget(Number(e.target.value))}
+              placeholder="Autre"
               aria-label="Score cible personnalisé"
-              className="w-20 rounded-2xl border border-border bg-surface py-3 text-center text-base font-semibold outline-none focus:border-accent"
+              className={`w-20 rounded-2xl border py-3 text-center text-base font-semibold outline-none placeholder:text-muted/60 focus:border-accent ${
+                PRESETS.includes(target)
+                  ? "border-border bg-surface"
+                  : "border-accent bg-accent/10 text-accent"
+              }`}
             />
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+            Déroulé
+          </h2>
+          <div className="flex flex-col gap-2.5">
+            {MODES.map((m) => {
+              const active = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`rounded-2xl border p-3.5 text-left transition-colors active:scale-[0.99] ${
+                    active
+                      ? "border-accent bg-accent/10"
+                      : "border-border bg-surface hover:border-accent/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-base font-bold ${
+                        active ? "text-accent" : "text-foreground"
+                      }`}
+                    >
+                      {m.label}
+                    </span>
+                    <span
+                      className={`grid h-5 w-5 place-items-center rounded-full border-2 ${
+                        active
+                          ? "border-accent bg-accent text-on-accent"
+                          : "border-border"
+                      }`}
+                    >
+                      {active && <span className="text-[10px]">✓</span>}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                    {m.desc}
+                  </p>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
       <button
         disabled={!canStart}
-        onClick={() => onStart(filled, target)}
+        onClick={() => onStart(filled, target, mode)}
         className="mt-8 w-full rounded-2xl bg-accent py-4 text-lg font-bold text-on-accent shadow-lg shadow-accent/20 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
       >
         Démarrer la partie
